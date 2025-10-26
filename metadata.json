@@ -1,0 +1,5 @@
+{
+  "name": "Interactive Perceptron Simulator",
+  "description": "A web application that visually demonstrates the inner workings of a simple perceptron. Users can specify inputs and weights, or use random weights, and see the step-by-step calculation of the weighted sum and the final output through a sigmoid activation function.",
+  "requestFramePermissions": []
+}
