@@ -1,8 +1,14 @@
 import React from 'react';
-import { InputState } from '../types';
+
+// Define a local type for props to ensure this component works with numbers
+interface DiagramInput {
+  id: string;
+  value: number;
+  weight: number;
+}
 
 interface PerceptronDiagramProps {
-  inputs: InputState[];
+  inputs: DiagramInput[];
   bias: number;
   sum: number;
   output: number;

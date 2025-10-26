@@ -1,5 +1,5 @@
 export interface InputState {
   id: string;
-  value: number;
-  weight: number;
+  value: string;
+  weight: string;
 }

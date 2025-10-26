@@ -8,12 +8,12 @@ const generateId = () => `id-${nextId++}`;
 
 const App: React.FC = () => {
   const [inputs, setInputs] = useState<InputState[]>([
-    { id: generateId(), value: 1, weight: 0.5 },
-    { id: generateId(), value: 0, weight: -0.5 },
+    { id: generateId(), value: '1', weight: '0.5' },
+    { id: generateId(), value: '0', weight: '-0.5' },
   ]);
-  const [bias, setBias] = useState<number>(-0.2);
+  const [bias, setBias] = useState<string>('-0.2');
 
-  const handleInputChange = (id: string, field: 'value' | 'weight', newValue: number) => {
+  const handleInputChange = (id: string, field: 'value' | 'weight', newValue: string) => {
     setInputs(inputs.map(input => 
       input.id === id ? { ...input, [field]: newValue } : input
     ));
@@ -21,7 +21,7 @@ const App: React.FC = () => {
 
   const addInput = () => {
     if (inputs.length < 5) {
-      setInputs([...inputs, { id: generateId(), value: 0, weight: 0.1 }]);
+      setInputs([...inputs, { id: generateId(), value: '0', weight: '0.1' }]);
     }
   };
 
@@ -32,7 +32,12 @@ const App: React.FC = () => {
   };
 
   const { sum, output } = useMemo(() => {
-    const calculatedSum = inputs.reduce((acc, input) => acc + input.value * input.weight, 0) + bias;
+    const biasNum = parseFloat(bias) || 0;
+    const calculatedSum = inputs.reduce((acc, input) => {
+        const val = parseFloat(input.value) || 0;
+        const w = parseFloat(input.weight) || 0;
+        return acc + val * w;
+    }, 0) + biasNum;
     // Step activation function
     const calculatedOutput = calculatedSum > 0 ? 1 : 0;
     return { sum: calculatedSum, output: calculatedOutput };
@@ -53,39 +58,43 @@ const App: React.FC = () => {
       transition: 'background-color 0.2s ease-in-out',
   };
 
+  const inputsForDiagram = useMemo(() => inputs.map(i => ({
+    id: i.id,
+    value: parseFloat(i.value) || 0,
+    weight: parseFloat(i.weight) || 0,
+  })), [inputs]);
+
+  const biasForDiagram = useMemo(() => parseFloat(bias) || 0, [bias]);
+
+
   return (
     <div style={{minHeight: '100vh', backgroundColor: '#111827', color: 'white', fontFamily: 'sans-serif', padding: '1rem'}}>
       <style>{`
         body { margin: 0; }
-        .range-slider {
-          -webkit-appearance: none;
-          appearance: none;
+        .number-input {
           width: 100%;
-          height: 8px;
-          border-radius: 5px;
-          background: #374151;
+          background-color: #374151;
+          color: #d1d5db;
+          border: 1px solid #4b5563;
+          border-radius: 0.375rem;
+          padding: 0.5rem 0.75rem;
+          font-family: monospace;
+          font-size: 1rem;
+          box-sizing: border-box;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .number-input:focus {
           outline: none;
-          opacity: 0.7;
-          transition: opacity .2s;
+          border-color: #6366f1;
+          box-shadow: 0 0 0 2px #4f46e5;
         }
-        .range-slider:hover {
-          opacity: 1;
-        }
-        .range-slider::-webkit-slider-thumb {
+        .number-input::-webkit-outer-spin-button,
+        .number-input::-webkit-inner-spin-button {
           -webkit-appearance: none;
-          appearance: none;
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          background: #6366f1;
-          cursor: pointer;
+          margin: 0;
         }
-        .range-slider::-moz-range-thumb {
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          background: #6366f1;
-          cursor: pointer;
+        .number-input {
+          -moz-appearance: textfield;
         }
         .main-grid {
             display: grid;
@@ -127,33 +136,27 @@ const App: React.FC = () => {
                 <div key={input.id} style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', padding: '0.75rem', backgroundColor: 'rgba(55, 65, 81, 0.5)', borderRadius: '0.375rem', marginBottom: '1rem'}}>
                   <div>
                     <label style={{fontSize: '0.875rem', color: '#9ca3af', marginBottom: '0.25rem', display: 'block'}}>Input (x{index + 1})</label>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                      <input 
-                        type="range" 
-                        min="0" 
-                        max="1" 
-                        step="1"
-                        value={input.value}
-                        onChange={(e) => handleInputChange(input.id, 'value', Number(e.target.value))}
-                        className="range-slider"
-                      />
-                      <span style={{fontFamily: 'monospace', color: '#a5b4fc', width: '2rem', textAlign: 'center'}}>{input.value}</span>
-                    </div>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      max="1" 
+                      step="1"
+                      value={input.value}
+                      onChange={(e) => handleInputChange(input.id, 'value', e.target.value)}
+                      className="number-input"
+                    />
                   </div>
                    <div>
                     <label style={{fontSize: '0.875rem', color: '#9ca3af', marginBottom: '0.25rem', display: 'block'}}>Weight (w{index + 1})</label>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-                       <input 
-                        type="range" 
-                        min="-1" 
-                        max="1" 
-                        step="0.01"
-                        value={input.weight}
-                        onChange={(e) => handleInputChange(input.id, 'weight', Number(e.target.value))}
-                        className="range-slider"
-                      />
-                      <span style={{fontFamily: 'monospace', color: '#a5b4fc', width: '4rem', textAlign: 'center'}}>{input.weight.toFixed(2)}</span>
-                    </div>
+                    <input 
+                      type="number" 
+                      min="-1" 
+                      max="1" 
+                      step="0.01"
+                      value={input.weight}
+                      onChange={(e) => handleInputChange(input.id, 'weight', e.target.value)}
+                      className="number-input"
+                    />
                   </div>
                 </div>
               ))}
@@ -170,27 +173,26 @@ const App: React.FC = () => {
 
             <div>
               <h3 style={{fontSize: '1.125rem', fontWeight: 500, color: '#d1d5db', marginBottom: '0.5rem'}}>Bias</h3>
-              <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', backgroundColor: 'rgba(55, 65, 81, 0.5)', borderRadius: '0.375rem'}}>
+              <div style={{padding: '0.75rem', backgroundColor: 'rgba(55, 65, 81, 0.5)', borderRadius: '0.375rem'}}>
                 <input 
-                  type="range" 
+                  type="number" 
                   min="-1" 
                   max="1" 
                   step="0.01"
                   value={bias}
-                  onChange={(e) => setBias(Number(e.target.value))}
-                  className="range-slider"
+                  onChange={(e) => setBias(e.target.value)}
+                  className="number-input"
                 />
-                <span style={{fontFamily: 'monospace', color: '#a5b4fc', width: '4rem', textAlign: 'center'}}>{bias.toFixed(2)}</span>
               </div>
             </div>
           </div>
 
           <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
-            <PerceptronDiagram inputs={inputs} bias={bias} sum={sum} output={output} />
+            <PerceptronDiagram inputs={inputsForDiagram} bias={biasForDiagram} sum={sum} output={output} />
              <div style={{marginTop: '1.5rem', backgroundColor: '#1f2937', padding: '1.5rem', borderRadius: '0.5rem', textAlign: 'center', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)'}}>
                 <h3 style={{fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.5rem', color: '#a5b4fc'}}>Calculation</h3>
                 <p style={{fontSize: '1.125rem', fontFamily: 'monospace', color: '#d1d5db', wordBreak: 'break-word'}}>
-                    {inputs.map((i) => `(${i.value}*${i.weight.toFixed(2)})`).join(' + ')} + ({bias.toFixed(2)}) = <span style={{color: '#4ade80', fontWeight: 'bold'}}>{sum.toFixed(2)}</span>
+                    {inputs.map((i) => `(${i.value || 0}*${i.weight || 0})`).join(' + ')} + ({bias || 0}) = <span style={{color: '#4ade80', fontWeight: 'bold'}}>{sum.toFixed(2)}</span>
                 </p>
                 <p style={{marginTop: '0.5rem', fontSize: '1.125rem', color: '#d1d5db'}}>
                     Output = Step({sum.toFixed(2)}) = <span style={{color: '#facc15', fontWeight: 'bold'}}>{output}</span>
